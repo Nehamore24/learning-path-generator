@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pathwright — Learning Roadmaps</title>
+<style>
+  :root {
+    --ink: #12181f;
+    --panel: #1a222c;
+    --panel-2: #212b37;
+    --line: #2c3947;
+    --paper: #eef1f4;
+    --muted: #8b9aab;
+    --amber: #e0a458;
+    --amber-dim: #a97c40;
+    --good: #6fae8c;
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-body: 'Inter', -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--font-body);
+    min-height: 100vh;
+  }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 48px 24px 96px;
+  }
+
+  header {
+    margin-bottom: 40px;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 40px;
+    line-height: 1.1;
+    margin: 0 0 12px;
+    letter-spacing: -0.01em;
+  }
+
+  .sub {
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.5;
+    max-width: 46ch;
+  }
+
+  /* ---- Form ---- */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 28px;
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 8px;
+    margin-top: 20px;
+  }
+  label:first-of-type { margin-top: 0; }
+
+  input, textarea {
+    width: 100%;
+    background: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 12px 14px;
+    color: var(--paper);
+    font-family: var(--font-body);
+    font-size: 15px;
+    resize: vertical;
+  }
+  input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--amber);
+  }
+
+  textarea { min-height: 90px; }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  button.primary {
+    margin-top: 26px;
+    width: 100%;
+    background: var(--amber);
+    color: #1a1200;
+    border: none;
+    border-radius: 6px;
+    padding: 14px 20px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  button.primary:hover { background: #eeb46e; }
+  button.primary:disabled { background: var(--line); color: var(--muted); cursor: wait; }
+
+  .error-box {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border-radius: 6px;
+    background: rgba(200, 90, 90, 0.12);
+    border: 1px solid rgba(200, 90, 90, 0.4);
+    color: #e3a3a3;
+    font-size: 14px;
+  }
+
+  /* ---- Roadmap view ---- */
+  #roadmapView { display: none; }
+
+  .progress-block {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 32px 0 40px;
+  }
+
+  .progress-track {
+    flex: 1;
+    height: 8px;
+    background: var(--panel-2);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--amber);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+  }
+  .progress-label {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--amber);
+    white-space: nowrap;
+  }
+
+  .category-block { margin-bottom: 36px; }
+
+  .category-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    color: var(--amber);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .path {
+    position: relative;
+    padding-left: 28px;
+  }
+  .path::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 6px;
+    bottom: 6px;
+    width: 2px;
+    background: var(--line);
+  }
+
+  .milestone {
+    position: relative;
+    padding: 14px 0 14px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .milestone:last-child { border-bottom: none; }
+
+  .milestone::before {
+    content: '';
+    position: absolute;
+    left: -28px;
+    top: 20px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--panel);
+    border: 2px solid var(--muted);
+    transition: all 0.2s ease;
+  }
+  .milestone.done::before {
+    background: var(--good);
+    border-color: var(--good);
+  }
+
+  .m-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+  }
+
+  .checkbox {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--muted);
+    border-radius: 4px;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+  }
+  .milestone.done .checkbox {
+    background: var(--good);
+    border-color: var(--good);
+  }
+  .checkbox svg { display: none; width: 12px; height: 12px; }
+  .milestone.done .checkbox svg { display: block; }
+
+  .m-title {
+    font-size: 15.5px;
+    font-weight: 600;
+    color: var(--paper);
+  }
+  .milestone.done .m-title {
+    color: var(--muted);
+    text-decoration: line-through;
+    text-decoration-color: var(--line);
+  }
+
+  .m-desc {
+    font-size: 13.5px;
+    color: var(--muted);
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+
+  .m-resources {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .m-resources a {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--amber-dim);
+    text-decoration: none;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 3px 8px;
+  }
+  .m-resources a:hover { border-color: var(--amber); color: var(--amber); }
+
+  .new-btn {
+    margin-top: 40px;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .new-btn:hover { color: var(--paper); border-color: var(--muted); }
+
+  .loading {
+    text-align: center;
+    padding: 40px 0;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Pathwright</div>
+    <h1>Your next role, mapped out.</h1>
+    <p class="sub">Tell it what you know and where you're headed — it builds a milestone-by-milestone path there, and remembers what you've finished.</p>
+  </header>
+
+  <div id="formView" class="card">
+    <label for="name">Your name</label>
+    <input type="text" id="name" placeholder="e.g. Priya Sharma">
+
+    <label for="email">Email</label>
+    <input type="email" id="email" placeholder="you@example.com">
+
+    <label for="skills">Current skills</label>
+    <textarea id="skills" placeholder="e.g. Core Java, basic HTML/CSS, some SQL from college coursework"></textarea>
+
+    <label for="role">Target role</label>
+    <input type="text" id="role" placeholder="e.g. Backend Developer">
+
+    <button class="primary" id="generateBtn" onclick="generateRoadmap()">Generate my roadmap</button>
+    <div id="errorBox" class="error-box" style="display:none;"></div>
+  </div>
+
+  <div id="loadingBox" class="loading" style="display:none;">Building your roadmap — this takes a few seconds…</div>
+
+  <div id="roadmapView">
+    <div class="progress-block">
+      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <div class="progress-label" id="progressLabel">0%</div>
+    </div>
+    <div id="categoriesContainer"></div>
+    <button class="new-btn" onclick="resetForm()">← Start a new roadmap</button>
+  </div>
+</div>
+
+<script>
+const API_BASE = '/api';
+let currentRoadmapId = null;
+
+async function generateRoadmap() {
+  const name = document.getElementById('name').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const skills = document.getElementById('skills').value.trim();
+  const role = document.getElementById('role').value.trim();
+  const errorBox = document.getElementById('errorBox');
+  const btn = document.getElementById('generateBtn');
+
+  errorBox.style.display = 'none';
+
+  if (!name || !email || !skills || !role) {
+    errorBox.textContent = 'Please fill in every field before generating a roadmap.';
+    errorBox.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+  document.getElementById('formView').style.display = 'none';
+  document.getElementById('loadingBox').style.display = 'block';
+
+  try {
+    const userRes = await fetch(`${API_BASE}/users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email })
+    });
+    if (!userRes.ok) throw new Error('Could not create user.');
+    const user = await userRes.json();
+
+    const roadmapRes = await fetch(`${API_BASE}/roadmaps`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user.id, currentSkills: skills, targetRole: role })
+    });
+
+    if (!roadmapRes.ok) {
+      const err = await roadmapRes.json();
+      throw new Error(err.error || 'Failed to generate roadmap.');
+    }
+
+    const roadmap = await roadmapRes.json();
+    renderRoadmap(roadmap);
+
+  } catch (e) {
+    document.getElementById('loadingBox').style.display = 'none';
+    document.getElementById('formView').style.display = 'block';
+    errorBox.textContent = e.message || 'Something went wrong. Please try again.';
+    errorBox.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Generate my roadmap';
+  }
+}
+
+function renderRoadmap(roadmap) {
+  currentRoadmapId = roadmap.id;
+  document.getElementById('loadingBox').style.display = 'none';
+  document.getElementById('roadmapView').style.display = 'block';
+
+  const byCategory = {};
+  roadmap.milestones
+    .sort((a, b) => a.orderIndex - b.orderIndex)
+    .forEach(m => {
+      if (!byCategory[m.category]) byCategory[m.category] = [];
+      byCategory[m.category].push(m);
+    });
+
+  const container = document.getElementById('categoriesContainer');
+  container.innerHTML = '';
+
+  Object.entries(byCategory).forEach(([category, milestones]) => {
+    const block = document.createElement('div');
+    block.className = 'category-block';
+
+    const title = document.createElement('div');
+    title.className = 'category-title';
+    title.textContent = category;
+    block.appendChild(title);
+
+    const path = document.createElement('div');
+    path.className = 'path';
+
+    milestones.forEach(m => {
+      const el = document.createElement('div');
+      el.className = 'milestone' + (m.completed ? ' done' : '');
+      el.id = `milestone-${m.id}`;
+
+      let resourcesHtml = '';
+      try {
+        const resources = JSON.parse(m.resourceLinks || '[]');
+        if (resources.length) {
+          resourcesHtml = '<div class="m-resources">' +
+            resources.map(r => `<a href="${r.url}" target="_blank" rel="noopener">${r.title}</a>`).join('') +
+            '</div>';
+        }
+      } catch (e) { /* no resources, skip */ }
+
+      el.innerHTML = `
+        <div class="m-head" onclick="toggleMilestone(${m.id})">
+          <div class="checkbox"><svg viewBox="0 0 24 24" fill="none" stroke="#12181f" stroke-width="3"><path d="M4 12l6 6L20 6"/></svg></div>
+          <div>
+            <div class="m-title">${escapeHtml(m.title)}</div>
+            <div class="m-desc">${escapeHtml(m.description || '')}</div>
+            ${resourcesHtml}
+          </div>
+        </div>
+      `;
+      path.appendChild(el);
+    });
+
+    block.appendChild(path);
+    container.appendChild(block);
+  });
+
+  updateProgress(roadmap.milestones);
+}
+
+async function toggleMilestone(id) {
+  const el = document.getElementById(`milestone-${id}`);
+  const isCurrentlyDone = el.classList.contains('done');
+  const newState = !isCurrentlyDone;
+
+  el.classList.toggle('done', newState);
+  recalcProgressFromDom();
+
+  try {
+    const res = await fetch(`${API_BASE}/milestones/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isCompleted: newState })
+    });
+    if (!res.ok) throw new Error();
+  } catch (e) {
+    // revert on failure
+    el.classList.toggle('done', isCurrentlyDone);
+    recalcProgressFromDom();
+  }
+}
+
+function updateProgress(milestones) {
+  const total = milestones.length;
+  const done = milestones.filter(m => m.completed).length;
+  setProgress(total ? Math.round((done / total) * 100) : 0);
+}
+
+function recalcProgressFromDom() {
+  const all = document.querySelectorAll('.milestone');
+  const done = document.querySelectorAll('.milestone.done');
+  setProgress(all.length ? Math.round((done.length / all.length) * 100) : 0);
+}
+
+function setProgress(pct) {
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = pct + '%';
+}
+
+function resetForm() {
+  document.getElementById('roadmapView').style.display = 'none';
+  document.getElementById('formView').style.display = 'block';
+  document.getElementById('skills').value = '';
+  document.getElementById('role').value = '';
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+</script>
+
+</body>
+</html>
