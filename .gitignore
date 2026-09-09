@@ -5,3 +5,4 @@ target/
 .vscode/
 .DS_Store
 *.log
+src/main/resources/application.properties
