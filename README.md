@@ -1,5 +1,5 @@
 # Pathwright — AI Learning Path Generator
-
+https://github.com/Nehamore24/learning-path-generator/tree/main
 A full-stack app that generates a personalized, milestone-based learning roadmap
 using an LLM, and tracks your progress as you complete each step.
 
